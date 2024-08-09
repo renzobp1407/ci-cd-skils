@@ -40,3 +40,12 @@ jobs:
     - name: run test 
       run: |
         npm test
+
+    - name: upload compilation artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: react-app-artifact
+        retention-days: 30
+        path: |
+          build/*
+               
