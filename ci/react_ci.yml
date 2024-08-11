@@ -1,24 +1,67 @@
 name: React app CI
 
 on:
-  workflow_dispatch:
-    inputs:
-      env:
-        type: choice
-        description: environment
-        required: true
-        options:
-          - dev
-          - qa
-          - pdn 
-        default: get
+  push:
+    branches:
+      - "main"
+      - "develop"
+      - "feature/*"
+      - "release/*"
+      - "hotfix/*"
+    paths:
+      - "src/*"  
+  pull-request:
+    branches:
+      - "main"
+      - "develop"
+      - "release/*"
+    paths:
+      - "src/*"
+    types:
+      - opened    
+      - synchronize
+
+env:
+env_dev: dev
+env_qa: qa
+env_prod: prod
+branch_name: ${{ github.ref_name }}
+event_type: ${{ github.event_name }}
+
 
 jobs:
+
+  environment_definition:
+    name: compile the application
+    runs-on: ubuntu-latest
+    outputs:
+      enviroment: ${{ steps.env_definition.outputs.defined_env }}
+    steps:
+
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: environment definition 
+      id: env_definition
+      run: |
+        if [[ ${branch_name} == 'feature/*' ]] 
+        then
+            echo "defined_env=${env_dev}" >> $GITHUB_OUTPUT
+        else
+            if [[ ${event_type} == 'pull_request' ]] 
+            then
+                echo "defined_env=${env_qa}" >> $GITHUB_OUTPUT
+        else
+            if [[ ${event_type} == 'push' && ${branch_name} == 'main' ]] 
+            then
+                echo "defined_env=${env_prod}" >> $GITHUB_OUTPUT
+            fi
+        fi                     
+
   build_app:
     name: compile the application
     runs-on: ubuntu-latest
-    environment: ${{ inputs.env }}
-
+    environment: ${{ needs.environment_definition.outputs.environment }}
     steps:
 
     - name: Checkout code
@@ -26,20 +69,38 @@ jobs:
 
     - name: npm install 
       run: |
-        npm install  
+        npm install 
 
     - name: node install 
       uses: actions/setup-node@v3
       with:
         node-version: 22.x  
 
+    - name: run test 
+      run: |
+        npm test
+
+    - name: Run ESLint
+      run: npm run lint        
+
+    - name: Run Trivy vulnerability scanner in repo mode
+      uses: aquasecurity/trivy-action@0.20.0
+      with:
+        scan-type: 'fs'
+        ignore-unfixed: true
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+        severity: 'CRITICAL'
+        args: '--exit-code 1'
+
     - name: run build  
       run: |
         npm run build --if-present
 
-    - name: run test 
-      run: |
-        npm test
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: 'trivy-results.sarif'
 
     - name: upload compilation artifact
       uses: actions/upload-artifact@v3

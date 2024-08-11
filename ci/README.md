@@ -8,9 +8,16 @@ el pipeline en github Actions para la app de react la plantee de la siguiente fo
 
 Ejecución:
 
-- **workflow distpatch:** Para ejecución manual momentaneamente para ajustarlo a la estrategia de branching management
+- **on push branches paths:**  Al detectarse un push, este ejecutará una rama automaticamente si las ramas mencionadas se encuentran ahí y si el path afectado fue "src/" 
 
-Jobs:
--  Build App: contiene las tareas necesarias para descargar las dependencias, realizar las pruebas unitarias, crear un archivo compilado y subir un artefacto.
+- **pull-request:** Al igual que on push, si este detecta que un pull request está abierto (opened), este se ejecutará de forma automatica en las ramas mencionadas (synchronize) y si tambien el path afectado es "src/"
 
 ## CI flow
+
+Jobs:
+
+- environment_definition: El Job esta encargado de asignar el entorno en que se está trabajando en base a la rama ejecutada, dependiendo el tipo de evento (event_type) y rama (ref_name) este asignara un valor en el output del job
+
+-  Build App: contiene las tareas necesarias para descargar el repositorio, instalar las dependencias, realizar la ejecución de pruebas unitarias, realizar un escaneo de vulnerabilidades, ejecutar eslint para arreglar problemas en el codigo, crear un archivo compilado, subir un artefacto de los resultados de trivy y compilado.
+
+el escaneo de vulnerabilidades con tryvt scan romperá el pipeline si encuentra una vulnerabilidad critica en el repositorio
