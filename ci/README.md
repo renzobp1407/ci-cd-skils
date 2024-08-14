@@ -20,4 +20,8 @@ Jobs:
 
 -  Build App: contiene las tareas necesarias para descargar el repositorio, instalar las dependencias, realizar la ejecución de pruebas unitarias, realizar un escaneo de vulnerabilidades, ejecutar eslint para arreglar problemas en el codigo, crear un archivo compilado, subir un artefacto de los resultados de trivy y compilado.
 
-el escaneo de vulnerabilidades con tryvt scan romperá el pipeline si encuentra una vulnerabilidad critica en el repositorio
+el escaneo de vulnerabilidades con trivy scan romperá el pipeline si encuentra una vulnerabilidad critica en el repositorio
+
+- el archivo de subida de trivy es unico y se va a mostrar en el pipeline como un adjunto
+
+- al igual que el archivo de subida de trivy, el de compilación abarcará todo el contenido de la carpeta `build`
